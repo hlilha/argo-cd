@@ -9,6 +9,7 @@ import {services} from '../../../shared/services';
 import {ImageTagFieldEditor} from './kustomize';
 import * as kustomize from './kustomize-image';
 import {VarsInputField} from './vars-input-field';
+import { JsonForm } from './JsonForm';
 
 const TextWithMetadataField = ReactFormField((props: {metadata: {value: string}; fieldApi: FieldApi; className: string}) => {
     const {
@@ -254,52 +255,63 @@ export const ApplicationParameters = (props: {
                 </div>
             )
         });
-        const paramsByName = new Map<string, models.HelmParameter>();
-        (props.details.helm.parameters || []).forEach(param => paramsByName.set(param.name, param));
-        const overridesByName = new Map<string, number>();
-        ((source.helm && source.helm.parameters) || []).forEach((override, i) => overridesByName.set(override.name, i));
-        attributes = attributes.concat(
-            getParamsEditableItems(
-                app,
-                'PARAMETERS',
-                'spec.source.helm.parameters',
-                removedOverrides,
-                setRemovedOverrides,
-                distinct(paramsByName.keys(), overridesByName.keys()).map(name => {
-                    const param = paramsByName.get(name);
-                    const original = (param && param.value) || '';
-                    let overrideIndex = overridesByName.get(name);
-                    if (overrideIndex === undefined) {
-                        overrideIndex = -1;
-                    }
-                    const value = (overrideIndex > -1 && source.helm.parameters[overrideIndex].value) || original;
-                    return {overrideIndex, original, metadata: {name, value}};
-                })
-            )
-        );
-        const fileParamsByName = new Map<string, models.HelmFileParameter>();
-        (props.details.helm.fileParameters || []).forEach(param => fileParamsByName.set(param.name, param));
-        const fileOverridesByName = new Map<string, number>();
-        ((source.helm && source.helm.fileParameters) || []).forEach((override, i) => fileOverridesByName.set(override.name, i));
-        attributes = attributes.concat(
-            getParamsEditableItems(
-                app,
-                'PARAMETERS',
-                'spec.source.helm.parameters',
-                removedOverrides,
-                setRemovedOverrides,
-                distinct(fileParamsByName.keys(), fileOverridesByName.keys()).map(name => {
-                    const param = fileParamsByName.get(name);
-                    const original = (param && param.path) || '';
-                    let overrideIndex = fileOverridesByName.get(name);
-                    if (overrideIndex === undefined) {
-                        overrideIndex = -1;
-                    }
-                    const value = (overrideIndex > -1 && source.helm.fileParameters[overrideIndex].path) || original;
-                    return {overrideIndex, original, metadata: {name, value}};
-                })
-            )
-        );
+        if (props.details.helm.valuesSchema) {
+            const schema = JSON.parse(props.details.helm.valuesSchema);
+            attributes.push({
+                title: "PARAMETERS",
+                view: <JsonForm schema={schema} />, 
+                edit: (formApi: FormApi) => (
+                    <JsonForm schema={schema} />
+                )
+            });
+        } else {
+            const paramsByName = new Map<string, models.HelmParameter>();
+            (props.details.helm.parameters || []).forEach(param => paramsByName.set(param.name, param));
+            const overridesByName = new Map<string, number>();
+            ((source.helm && source.helm.parameters) || []).forEach((override, i) => overridesByName.set(override.name, i));
+            attributes = attributes.concat(
+                getParamsEditableItems(
+                    app,
+                    'PARAMETERS',
+                    'spec.source.helm.parameters',
+                    removedOverrides,
+                    setRemovedOverrides,
+                    distinct(paramsByName.keys(), overridesByName.keys()).map(name => {
+                        const param = paramsByName.get(name);
+                        const original = (param && param.value) || '';
+                        let overrideIndex = overridesByName.get(name);
+                        if (overrideIndex === undefined) {
+                            overrideIndex = -1;
+                        }
+                        const value = (overrideIndex > -1 && source.helm.parameters[overrideIndex].value) || original;
+                        return {overrideIndex, original, metadata: {name, value}};
+                    })
+                )
+            );
+            const fileParamsByName = new Map<string, models.HelmFileParameter>();
+            (props.details.helm.fileParameters || []).forEach(param => fileParamsByName.set(param.name, param));
+            const fileOverridesByName = new Map<string, number>();
+            ((source.helm && source.helm.fileParameters) || []).forEach((override, i) => fileOverridesByName.set(override.name, i));
+            attributes = attributes.concat(
+                getParamsEditableItems(
+                    app,
+                    'PARAMETERS',
+                    'spec.source.helm.parameters',
+                    removedOverrides,
+                    setRemovedOverrides,
+                    distinct(fileParamsByName.keys(), fileOverridesByName.keys()).map(name => {
+                        const param = fileParamsByName.get(name);
+                        const original = (param && param.path) || '';
+                        let overrideIndex = fileOverridesByName.get(name);
+                        if (overrideIndex === undefined) {
+                            overrideIndex = -1;
+                        }
+                        const value = (overrideIndex > -1 && source.helm.fileParameters[overrideIndex].path) || original;
+                        return {overrideIndex, original, metadata: {name, value}};
+                    })
+                )
+            );
+        }
     } else if (props.details.type === 'Plugin') {
         attributes.push({
             title: 'NAME',

@@ -28,6 +28,8 @@ type Helm interface {
 	Template(opts *TemplateOpts) (string, error)
 	// GetParameters returns a list of chart parameters taking into account values in provided YAML files.
 	GetParameters(valuesFiles []string) (map[string]string, error)
+	// GetParametersSchema returns values.schema.json
+	GetParametersSchema(valuesSchemaFile string) (string, error)
 	// DependencyBuild runs `helm dependency build` to download a chart's dependencies
 	DependencyBuild() error
 	// Init runs `helm init --client-only`
@@ -162,6 +164,25 @@ func (h *helm) GetParameters(valuesFiles []string) (map[string]string, error) {
 	}
 
 	return output, nil
+}
+
+func (h *helm) GetParametersSchema(file string) (string, error) {
+	var fileContent []byte
+	parsedURL, err := url.ParseRequestURI(file)
+	if err == nil && (parsedURL.Scheme == "http" || parsedURL.Scheme == "https") {
+		fileContent, err = config.ReadRemoteFile(file)
+	} else {
+		filePath := path.Join(h.cmd.WorkDir, file)
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			return "", nil
+		}
+		fileContent, err = ioutil.ReadFile(filePath)
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to read value file %s: %s", file, err)
+	}
+
+	return string(fileContent), err
 }
 
 func flatVals(input interface{}, output map[string]string, prefixes ...string) {

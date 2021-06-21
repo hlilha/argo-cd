@@ -1,0 +1,96 @@
+@import 'node_modules/argo-ui/src/styles/config';
+@import 'node_modules/foundation-sites/scss/util/util';
+
+#editor_holder {
+    .je-panel {
+        background-color: unset;
+    }
+    .je-object__container {
+        width: 100%;
+        .je-indented-panel {
+            border: none;
+            margin-left: 25px;
+            .row {
+                display: block;
+            }
+            .form-control {
+                display: flex;
+                .je-form-input-label {
+                    width: 25%;
+                }
+                input[type=text],
+                input[type=password],
+                input[type=email] {
+                    position: relative;
+                    width: 100%;
+                    max-width: 100%;
+                    padding: 8px 0;
+                    font-size: 15px;
+                    background-color: transparent;
+                    border: 0;
+                        border-bottom-color: currentcolor;
+                        border-bottom-style: none;
+                        border-bottom-width: 0px;
+                    border-bottom: 2px solid #ccc;
+                    transition: border .2s;
+
+                    &:focus {
+                        border-bottom: 2px solid $argo-color-teal-5;
+                    }
+                }
+            }
+        }
+    }
+    
+    .je-object__title {
+        font-size: 0.8125rem;
+    }
+    .form-group {
+        display: flex;
+
+        .form-label {
+            width: 30%;
+        }
+
+        
+
+        input[type=checkbox] {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &:focus {
+                border: 2px solid $argo-color-teal-5;
+            }
+        }
+
+        
+
+        select {
+            border: none;
+            position: relative;
+            padding: 8px 20px 8px 0;
+            font-size: 15px;
+            border-bottom: 2px solid #ccc;
+            transition: border .2s;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: unset;
+
+            option {
+                padding: 10px 12px;
+                color: #6D7F8B;
+                cursor: pointer;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+        
+    }
+}

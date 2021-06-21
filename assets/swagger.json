@@ -3807,6 +3807,10 @@
         "values": {
           "type": "string",
           "title": "the contents of values.yaml"
+        },
+        "valuesSchema": {
+          "type": "string",
+          "title": "helm value schema file"
         }
       }
     },

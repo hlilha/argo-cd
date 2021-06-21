@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@json-editor/json-editor": "^2.5.4",
     "@types/classnames": "^2.2.3",
     "@types/cookie": "^0.3.1",
     "@types/dagre": "^0.7.40",

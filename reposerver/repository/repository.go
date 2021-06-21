@@ -1252,6 +1252,12 @@ func populateHelmAppDetails(res *apiclient.RepoAppDetailsResponse, appPath strin
 	if err := loadFileIntoIfExists(filepath.Join(appPath, "values.yaml"), &res.Helm.Values); err != nil {
 		return err
 	}
+	schema, err := h.GetParametersSchema("values.schema.json")
+	if err != nil {
+		return err
+	}
+	res.Helm.ValuesSchema = schema
+
 	params, err := h.GetParameters(valueFiles)
 	if err != nil {
 		return err
