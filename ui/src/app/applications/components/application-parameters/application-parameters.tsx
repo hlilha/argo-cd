@@ -9,7 +9,7 @@ import {services} from '../../../shared/services';
 import {ImageTagFieldEditor} from './kustomize';
 import * as kustomize from './kustomize-image';
 import {VarsInputField} from './vars-input-field';
-import { JsonForm } from './JsonForm';
+import { JsonSchemaPanel } from '../../../shared/components/json-schema-panel/json-schema-panel';
 
 const TextWithMetadataField = ReactFormField((props: {metadata: {value: string}; fieldApi: FieldApi; className: string}) => {
     const {
@@ -256,14 +256,14 @@ export const ApplicationParameters = (props: {
             )
         });
         if (props.details.helm.valuesSchema) {
-            const schema = JSON.parse(props.details.helm.valuesSchema);
-            attributes.push({
-                title: "PARAMETERS",
-                view: <JsonForm schema={schema} />, 
-                edit: (formApi: FormApi) => (
-                    <JsonForm schema={schema} />
-                )
-            });
+            // const schema = JSON.parse(props.details.helm.valuesSchema);
+            // attributes.push({
+            //     title: "PARAMETERS",
+            //     view: <JsonForm schema={schema} />, 
+            //     edit: (formApi: FormApi) => (
+            //         <div />
+            //     )
+            // });
         } else {
             const paramsByName = new Map<string, models.HelmParameter>();
             (props.details.helm.parameters || []).forEach(param => paramsByName.set(param.name, param));
@@ -357,10 +357,13 @@ export const ApplicationParameters = (props: {
     }
 
     return (
-        <EditablePanel
-            save={
-                props.save &&
-                (async (input: models.Application) => {
+        <>
+        { props.details.helm.valuesSchema ? 
+            <JsonSchemaPanel 
+                title={props.details.type.toLocaleUpperCase()}
+                schema={props.details.helm.valuesSchema} 
+                parameters={props.details.helm.parameters}
+                save={props.save && (async (input: models.Application) => {
                     function isDefined(item: any) {
                         return item !== null && item !== undefined;
                     }
@@ -379,22 +382,45 @@ export const ApplicationParameters = (props: {
                     }
                     await props.save(input);
                     setRemovedOverrides(new Array<boolean>());
-                })
-            }
-            values={app}
-            validate={updatedApp => {
-                const errors = {} as any;
+                })}
+            /> : 
+            <EditablePanel
+                save={props.save &&
+                    (async (input: models.Application) => {
+                        function isDefined(item: any) {
+                            return item !== null && item !== undefined;
+                        }
+                        function isDefinedWithVersion(item: any) {
+                            return item !== null && item !== undefined && item.match(/:/);
+                        }
 
-                for (const fieldPath of ['spec.source.directory.jsonnet.tlas', 'spec.source.directory.jsonnet.extVars']) {
-                    const invalid = ((getNestedField(updatedApp, fieldPath) || []) as Array<models.JsonnetVar>).filter(item => !item.name && !item.code);
-                    errors[fieldPath] = invalid.length > 0 ? 'All fields must have name' : null;
-                }
+                        if (input.spec.source.helm && input.spec.source.helm.parameters) {
+                            input.spec.source.helm.parameters = input.spec.source.helm.parameters.filter(isDefined);
+                        }
+                        if (input.spec.source.ksonnet && input.spec.source.ksonnet.parameters) {
+                            input.spec.source.ksonnet.parameters = input.spec.source.ksonnet.parameters.filter(isDefined);
+                        }
+                        if (input.spec.source.kustomize && input.spec.source.kustomize.images) {
+                            input.spec.source.kustomize.images = input.spec.source.kustomize.images.filter(isDefinedWithVersion);
+                        }
+                        await props.save(input);
+                        setRemovedOverrides(new Array<boolean>());
+                    })}
+                values={app}
+                validate={updatedApp => {
+                    const errors = {} as any;
 
-                return errors;
-            }}
-            title={props.details.type.toLocaleUpperCase()}
-            items={attributes}
-            noReadonlyMode={props.noReadonlyMode}
-        />
-    );
+                    for (const fieldPath of ['spec.source.directory.jsonnet.tlas', 'spec.source.directory.jsonnet.extVars']) {
+                        const invalid = ((getNestedField(updatedApp, fieldPath) || []) as Array<models.JsonnetVar>).filter(item => !item.name && !item.code);
+                        errors[fieldPath] = invalid.length > 0 ? 'All fields must have name' : null;
+                    }
+
+                    return errors;
+                } }
+                title={props.details.type.toLocaleUpperCase()}
+                items={attributes}
+                noReadonlyMode={props.noReadonlyMode} />
+        }
+        </>
+        );
 };
